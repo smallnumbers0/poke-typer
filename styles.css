@@ -29,6 +29,9 @@ body {
     gap: 1rem;
 }
 
+
+/*ALL text related areas */
+
 .main-container {
     display: flex;
     flex-direction: column;
