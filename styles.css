@@ -81,3 +81,24 @@ body {
 .incorrect {
     color: #f44336;
 }
+
+.reset-btn {
+    margin-top: 15px;
+    padding: 12px 24px;
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 7px;
+    font-size: 1rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.reset-btn:hover {
+    background-color: #45a049;
+}
+
+.reset-btn:active {
+    background-color: #3d8b40;
+}

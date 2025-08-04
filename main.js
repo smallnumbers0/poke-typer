@@ -2,7 +2,6 @@ class PokeTyping {
     constructor() {
         this.pokemonNames = [];
         this.text = "";
-
         this.gameRunning = false;
         this.startTime = null;
         this.endTime = null;
@@ -20,8 +19,10 @@ class PokeTyping {
         this.timeDisplay = document.querySelector('.time-value');
         this.highScoreDisplay = document.getElementById('high-score');
         this.errorDisplay = document.getElementById('error-count');
+        this.resetButton = document.getElementById('reset-button');
         
         this.userInput.addEventListener('input', (event) => this.handleInput(event));
+        this.resetButton.addEventListener('click', () => this.resetGame());
         
         this.loadHighScore();
         console.log('High score element:', this.highScoreDisplay);
@@ -61,18 +62,21 @@ class PokeTyping {
 
     handleInput(event) {
         if(!this.gameRunning) return;
-        
+
         const inputText = this.userInput.textContent;
-        
+
         if (!this.hasStartedTyping && inputText.length > 0) {
             this.startTimer();
             this.hasStartedTyping = true;
         }
-        
+        if (inputText.length < this.currentIndex) {
+            this.currentIndex = inputText.length;
+        }
+
         for (let i = this.currentIndex; i < inputText.length; i++) {
             const currentChar = this.text[i];
             const userInputChar = inputText[i];
-            
+
             if (userInputChar === currentChar) {
                 this.currentIndex++;
                 if (this.currentIndex >= this.text.length) {
@@ -81,10 +85,10 @@ class PokeTyping {
                 }
             } else {
                 this.errors++;
-                break; 
+                break;
             }
         }
-        
+
         this.updateInputDisplay(inputText);
     }
 
@@ -155,11 +159,14 @@ class PokeTyping {
         const elapsedTimeInMinutes = (currentTime - this.startTime) / (1000 * 60);
         
         //weird pokemon per minute calculation for now.
-        const pokemonTyped = this.currentIndex / 7;
+        const pokemonTyped = this.currentIndex / 6;
         const ppm = Math.round(pokemonTyped / elapsedTimeInMinutes);
         
         return isNaN(ppm) || !isFinite(ppm) ? 0 : ppm;
     }
+
+    // Add later
+    // getAccuracy() {}
 
     updatePPMDisplay() {
         const currentPPM = this.getPokemonPerMin();
@@ -205,7 +212,41 @@ class PokeTyping {
         const finalPPM = this.getPokemonPerMin();
         const timeUsed = this.timeLimit - this.timeRemaining;
         const isNewHighScore = this.saveHighScore(finalPPM);
+        
+        // Show reset button
+        this.resetButton.style.display = 'block';
+    }
 
+    resetGame() {
+       
+        this.gameRunning = false;
+        this.startTime = null;
+        this.endTime = null;
+        this.timeRemaining = this.timeLimit;
+        this.currentIndex = 0;
+        this.errors = 0;
+        this.hasStartedTyping = false;
+        
+  
+        if (this.ppmUpdateTimer) {
+            clearInterval(this.ppmUpdateTimer);
+            this.ppmUpdateTimer = null;
+        }
+        
+        this.userInput.contentEditable = true;
+        this.userInput.style.pointerEvents = 'auto';
+        this.userInput.style.opacity = '1';
+        this.userInput.innerHTML = '';
+        this.userInput.focus();
+        
+        this.resetButton.style.display = 'none';
+        
+        this.ppmDisplay.textContent = '0';
+        this.timeDisplay.textContent = this.timeLimit.toString();
+        
+        this.fetchPokemonNames().then(() => {
+            this.startGame();
+        });
     }
 }
 
