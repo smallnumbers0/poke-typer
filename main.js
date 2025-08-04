@@ -8,6 +8,9 @@ class PokeTyping {
         this.endTime = null;
         this.timer = null;
         this.ppmUpdateTimer = null;
+        this.gameTimer = null;
+        this.timeLimit = 30; 
+        this.timeRemaining = this.timeLimit;
         this.currentIndex = 0;
         this.errors = 0;
         this.hasStartedTyping = false;
@@ -15,15 +18,21 @@ class PokeTyping {
         this.userInput = document.getElementById('user-input');
         this.ppmDisplay = document.querySelector('.wpm-value');
         this.timeDisplay = document.querySelector('.time-value');
+        this.highScoreDisplay = document.getElementById('high-score');
+        this.errorDisplay = document.getElementById('error-count');
+        
         this.userInput.addEventListener('input', (event) => this.handleInput(event));
-   
+        
+        this.loadHighScore();
+        console.log('High score element:', this.highScoreDisplay);
+        console.log('Error display element:', this.errorDisplay);
     }
     async fetchPokemonNames() {
         try {
-            const response = await fetch('https://pokeapi.co/api/v2/pokemon');
+            const response = await fetch('https://pokeapi.co/api/v2/pokemon?limit=500');
             const data = await response.json();
             let pokemonArr = data.results.map(pokemon => pokemon.name);
-            this.pokemonNames = this.getRandomPokemonNames(pokemonArr, 100);
+            this.pokemonNames = this.getRandomPokemonNames(pokemonArr, 20);
             this.text = this.pokemonNames.join(' ');
             this.displayText();
             console.log(this.pokemonNames);
@@ -79,6 +88,27 @@ class PokeTyping {
         this.updateInputDisplay(inputText);
     }
 
+    loadHighScore() {
+        const highScore = localStorage.getItem('pokeTyperHighScore');
+        
+        if (highScore) {
+            this.highScoreDisplay.textContent = highScore;
+        } else {
+            this.highScoreDisplay.textContent = "0";
+        }
+    }
+
+    saveHighScore(score) {
+        const currentHighScore = parseInt(localStorage.getItem('pokeTyperHighScore')) || 0;
+        
+        if (score > currentHighScore) {
+            localStorage.setItem('pokeTyperHighScore', score.toString());
+            this.highScoreDisplay.textContent = score;
+            return true;
+        }
+        return false;
+    }
+
     updateInputDisplay(inputText) {
         let inputChar = '';
         for (let i = 0; i < inputText.length; i++) {
@@ -124,8 +154,8 @@ class PokeTyping {
         const currentTime = this.gameRunning ? Date.now() : this.endTime;
         const elapsedTimeInMinutes = (currentTime - this.startTime) / (1000 * 60);
         
-
-        const pokemonTyped = this.currentIndex / 5;
+        //weird pokemon per minute calculation for now.
+        const pokemonTyped = this.currentIndex / 7;
         const ppm = Math.round(pokemonTyped / elapsedTimeInMinutes);
         
         return isNaN(ppm) || !isFinite(ppm) ? 0 : ppm;
@@ -137,35 +167,45 @@ class PokeTyping {
     }
 
     updateTimeDisplay() {
+        if (!this.hasStartedTyping) {
+            this.timeDisplay.textContent = this.timeLimit.toString();
+            return;
+        }
+        
         if (!this.startTime) return;
         
         const currentTime = this.gameRunning ? Date.now() : this.endTime;
         const elapsedTimeInSeconds = Math.floor((currentTime - this.startTime) / 1000);
+        this.timeRemaining = Math.max(0, this.timeLimit - elapsedTimeInSeconds);
         
-
-        const seconds = elapsedTimeInSeconds % 60;
-
-        const formattedTime = `${seconds.toString().padStart(2, '0')}`;
-        this.timeDisplay.textContent = formattedTime;
+        this.timeDisplay.textContent = this.timeRemaining.toString();
+        
+ 
+        if (this.timeRemaining <= 0 && this.gameRunning) {
+            this.endGame();
+        }
     }
 
     endGame() {
         this.gameRunning = false;
         this.endTime = Date.now();
-        this.userInput.disabled = true;
-
+        
+        this.userInput.contentEditable = false;
+        this.userInput.style.pointerEvents = 'none';
+        this.userInput.style.opacity = '0.6';
 
         if (this.ppmUpdateTimer) {
             clearInterval(this.ppmUpdateTimer);
         }
+
         this.updatePPMDisplay();
         this.updateTimeDisplay();
+   
         
         const finalPPM = this.getPokemonPerMin();
-        const totalTime = Math.floor((this.endTime - this.startTime) / 1000);
-        // console.log(`final PPM: ${finalPPM}`);
-        // console.log(`total Time: ${totalTime} seconds`);
-        // console.log(`errors: ${this.errors}`);
+        const timeUsed = this.timeLimit - this.timeRemaining;
+        const isNewHighScore = this.saveHighScore(finalPPM);
+
     }
 }
 
