@@ -40,7 +40,7 @@ body {
     width: 100%;
 }
 
-.text-display {
+.text-display-container {
     width: 100%;
     height: 300px;
     border: 2px solid rgb(93, 227, 25);
@@ -64,4 +64,20 @@ body {
     font-size: 1rem;
     border: 2px solid rgb(93, 227, 25);
     border-radius: 7px;
+    outline: none;
+    overflow-wrap: break-word;
+    white-space: pre-wrap;
+}
+
+.input-text:empty:before {
+    content: attr(data-placeholder);
+    color: #999;
+}
+
+.correct {
+    color: #4CAF50;
+}
+
+.incorrect {
+    color: #f44336;
 }

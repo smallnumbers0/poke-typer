@@ -13,6 +13,7 @@
         </header>
         <div class="timer-container">
             <h3 class="time">Time: <span class="time-value">0</span></h3>
+            <h3 class="ppm">PPM: <span class="wpm-value">0</span></h3>
         </div>
         <div class="stats">
             <h3 class="score">High Score: <span id="high-score">0</span></h3>
@@ -20,14 +21,12 @@
     </div>
 
     <div class="main-container">
-        <div class="text-display">
+        <div class="text-display-container">
             <p id="text-to-type"></p>
 
         </div>
         <div class="input-container">
-            <textarea id="user-input" class="input-text" placeholder="Start Typing Here" rows="20" cols="100">
-
-            </textarea>
+            <div id="user-input" class="input-text" contenteditable="true" data-placeholder="Start Typing Here"></div>
         </div>
     </div>
     <script src="main.js"></script>

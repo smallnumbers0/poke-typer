@@ -4,8 +4,17 @@ class PokeTyping {
         this.text = "";
 
         this.gameRunning = false;
+        this.startTime = null;
+        this.endTime = null;
+        this.timer = null;
+        this.ppmUpdateTimer = null;
         this.currentIndex = 0;
+        this.errors = 0;
+        this.hasStartedTyping = false;
+
         this.userInput = document.getElementById('user-input');
+        this.ppmDisplay = document.querySelector('.wpm-value');
+        this.timeDisplay = document.querySelector('.time-value');
         this.userInput.addEventListener('input', (event) => this.handleInput(event));
    
     }
@@ -35,34 +44,128 @@ class PokeTyping {
     }
 
     displayText() {
-        const textElement = document.getElementById('text-to-type');
-        textElement.textContent = this.text;
+        const textDisplay = document.getElementById('text-to-type');
+        textDisplay.innerHTML = this.text.split('')
+            .map((char, index) => `<span class="char-${index}" data-index="${index}">${char}</span>`)
+            .join('');
     }
 
     handleInput(event) {
         if(!this.gameRunning) return;
-        const userInput = this.userInput.value;
-        const currentChar = this.text[this.currentIndex];
-        const userInputChar = userInput[this.currentIndex];
-
-        if (userInputChar === currentChar) {
-            this.charCorrect(this.currentIndex);
-            this.currentIndex++;
-        } else {
-            this.charIncorrect(this.currentIndex);
+        
+        const inputText = this.userInput.textContent;
+        
+        if (!this.hasStartedTyping && inputText.length > 0) {
+            this.startTimer();
+            this.hasStartedTyping = true;
         }
+        
+        for (let i = this.currentIndex; i < inputText.length; i++) {
+            const currentChar = this.text[i];
+            const userInputChar = inputText[i];
+            
+            if (userInputChar === currentChar) {
+                this.currentIndex++;
+                if (this.currentIndex >= this.text.length) {
+                    this.endGame();
+                    return;
+                }
+            } else {
+                this.errors++;
+                break; 
+            }
+        }
+        
+        this.updateInputDisplay(inputText);
     }
 
-    charCorrect(index) {
-       console.log("working")
-    }
+    updateInputDisplay(inputText) {
+        let inputChar = '';
+        for (let i = 0; i < inputText.length; i++) {
+            const char = inputText[i];
+            const targetChar = this.text[i];
+            
+            if (char === targetChar) {
+                inputChar += `<span class="correct">${char}</span>`;
+            } else {
+                inputChar += `<span class="incorrect">${char}</span>`;
+            }
+        }
 
-    charIncorrect(index) {
-        console.log("not working")
+        this.userInput.innerHTML = inputChar;
+
+        const range = document.createRange();
+        range.selectNodeContents(this.userInput);
+        range.collapse(false);
+        const sel = window.getSelection();
+        sel.removeAllRanges();
+        sel.addRange(range);
     }
 
     startGame() {
         this.gameRunning = true;
+        this.updatePPMDisplay();
+        this.updateTimeDisplay();
+    }
+
+    startTimer() {
+        this.startTime = Date.now();
+        this.ppmUpdateTimer = setInterval(() => {
+            if (this.gameRunning) {
+                this.updatePPMDisplay();
+                this.updateTimeDisplay();
+            }
+        }, 1000);
+    }
+
+    getPokemonPerMin() {
+        if (!this.startTime) return 0;
+        
+        const currentTime = this.gameRunning ? Date.now() : this.endTime;
+        const elapsedTimeInMinutes = (currentTime - this.startTime) / (1000 * 60);
+        
+
+        const pokemonTyped = this.currentIndex / 5;
+        const ppm = Math.round(pokemonTyped / elapsedTimeInMinutes);
+        
+        return isNaN(ppm) || !isFinite(ppm) ? 0 : ppm;
+    }
+
+    updatePPMDisplay() {
+        const currentPPM = this.getPokemonPerMin();
+        this.ppmDisplay.textContent = currentPPM;
+    }
+
+    updateTimeDisplay() {
+        if (!this.startTime) return;
+        
+        const currentTime = this.gameRunning ? Date.now() : this.endTime;
+        const elapsedTimeInSeconds = Math.floor((currentTime - this.startTime) / 1000);
+        
+
+        const seconds = elapsedTimeInSeconds % 60;
+
+        const formattedTime = `${seconds.toString().padStart(2, '0')}`;
+        this.timeDisplay.textContent = formattedTime;
+    }
+
+    endGame() {
+        this.gameRunning = false;
+        this.endTime = Date.now();
+        this.userInput.disabled = true;
+
+
+        if (this.ppmUpdateTimer) {
+            clearInterval(this.ppmUpdateTimer);
+        }
+        this.updatePPMDisplay();
+        this.updateTimeDisplay();
+        
+        const finalPPM = this.getPokemonPerMin();
+        const totalTime = Math.floor((this.endTime - this.startTime) / 1000);
+        // console.log(`final PPM: ${finalPPM}`);
+        // console.log(`total Time: ${totalTime} seconds`);
+        // console.log(`errors: ${this.errors}`);
     }
 }
 
