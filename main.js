@@ -19,6 +19,7 @@ class PokeTyping {
         this.timeDisplay = document.querySelector('.time-value');
         this.highScoreDisplay = document.getElementById('high-score');
         this.errorDisplay = document.getElementById('error-count');
+        this.accuracyDisplay = document.querySelector('.accuracy-value');
         this.resetButton = document.getElementById('reset-button');
         
         this.userInput.addEventListener('input', (event) => this.handleInput(event));
@@ -69,10 +70,15 @@ class PokeTyping {
             this.startTimer();
             this.hasStartedTyping = true;
         }
+
+        // Handle backspacing - reset currentIndex and don't count as error
         if (inputText.length < this.currentIndex) {
             this.currentIndex = inputText.length;
+            this.updateInputDisplay(inputText);
+            return;
         }
 
+        // Process new characters being typed
         for (let i = this.currentIndex; i < inputText.length; i++) {
             const currentChar = this.text[i];
             const userInputChar = inputText[i];
@@ -84,6 +90,8 @@ class PokeTyping {
                     return;
                 }
             } else {
+                // Only count as error if we're typing a new incorrect character
+                // Don't increment errors on backspace
                 this.errors++;
                 break;
             }
@@ -165,8 +173,12 @@ class PokeTyping {
         return isNaN(ppm) || !isFinite(ppm) ? 0 : ppm;
     }
 
-    // Add later
-    // getAccuracy() {}
+    getAccuracy() {
+
+        let accuracy = (this.pokemonNames.length - this.errors) / this.pokemonNames.length * 100;
+        return isNaN(accuracy) || !isFinite(accuracy) ? 0 : Math.round(accuracy);
+
+    }
 
     updatePPMDisplay() {
         const currentPPM = this.getPokemonPerMin();
@@ -193,6 +205,11 @@ class PokeTyping {
         }
     }
 
+    updateAccuracyDisplay() {
+        const accuracy = this.getAccuracy();
+        this.accuracyDisplay.textContent = accuracy.toString();
+    }
+
     endGame() {
         this.gameRunning = false;
         this.endTime = Date.now();
@@ -207,12 +224,13 @@ class PokeTyping {
 
         this.updatePPMDisplay();
         this.updateTimeDisplay();
+        this.updateAccuracyDisplay();
    
         
         const finalPPM = this.getPokemonPerMin();
         const timeUsed = this.timeLimit - this.timeRemaining;
         const isNewHighScore = this.saveHighScore(finalPPM);
-        
+        const accuracy = this.getAccuracy();
         // Show reset button
         this.resetButton.style.display = 'block';
     }
