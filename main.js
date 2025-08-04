@@ -3,6 +3,11 @@ class PokeTyping {
         this.pokemonNames = [];
         this.text = "";
 
+        this.gameRunning = false;
+        this.currentIndex = 0;
+        this.userInput = document.getElementById('user-input');
+        this.userInput.addEventListener('input', (event) => this.handleInput(event));
+   
     }
     async fetchPokemonNames() {
         try {
@@ -34,7 +39,33 @@ class PokeTyping {
         textElement.textContent = this.text;
     }
 
+    handleInput(event) {
+        if(!this.gameRunning) return;
+        const userInput = this.userInput.value;
+        const currentChar = this.text[this.currentIndex];
+        const userInputChar = userInput[this.currentIndex];
+
+        if (userInputChar === currentChar) {
+            this.charCorrect(this.currentIndex);
+            this.currentIndex++;
+        } else {
+            this.charIncorrect(this.currentIndex);
+        }
+    }
+
+    charCorrect(index) {
+       console.log("working")
+    }
+
+    charIncorrect(index) {
+        console.log("not working")
+    }
+
+    startGame() {
+        this.gameRunning = true;
+    }
 }
 
 const newGame = new PokeTyping();
-newGame.fetchPokemonNames()
+newGame.fetchPokemonNames();
+newGame.startGame();
